@@ -8,7 +8,7 @@ local strformat = string.format
 local cursor_methods = { }
 local cursor_mt = { __index = cursor_methods }
 
-local function new_cursor(col, query, returnfields, num_each_query)
+local function new_cursor(col, query, returnfields, num_each_query, options)
     return setmetatable ( {
             col = col ;
             query = { ['$query'] = query} ;
@@ -22,6 +22,8 @@ local function new_cursor(col, query, returnfields, num_each_query)
             limit_n = 0;
             skip_n = 0;
             num_each = num_each_query;
+	    
+	    options = options;
         } , cursor_mt )
 end
 
@@ -65,7 +67,7 @@ function cursor_methods:next()
     local t
     if not self.id then
         self.id, self.results, t = self.col:query(self.query, 
-                        self.returnfields, self.i, self.num_each)
+                        self.returnfields, self.i, self.num_each, self.options)
         if self.id == "\0\0\0\0\0\0\0\0" then
             self.done = true
         end
