@@ -63,14 +63,17 @@ local function host()
    end
 end
 
-local machineid = ngx.md5_bin(host()):sub(1, 3)
+local function machineid()
+   return ngx.md5_bin(host()):sub(1, 3)
+end
+
 local pid = num_to_le_uint(bit.band(ngx.worker.pid(), 0xFFFF), 2)
 
 local inc = 0
 local function generate_id ( )
     inc = inc + 1
     -- "A BSON ObjectID is a 12-byte value consisting of a 4-byte timestamp (seconds since epoch), a 3-byte machine id, a 2-byte process id, and a 3-byte counter. Note that the timestamp and counter fields must be stored big endian unlike the rest of BSON"
-    return num_to_be_uint ( os.time ( ) , 4 ) .. machineid .. pid .. num_to_be_uint ( inc , 3 )
+    return num_to_be_uint ( os.time ( ) , 4 ) .. machineid() .. pid .. num_to_be_uint ( inc , 3 )
 end
 
 local function new_object_id(str)
