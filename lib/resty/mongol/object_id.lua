@@ -12,6 +12,11 @@ local ll = require ( mod_name .. ".ll" )
 local num_to_le_uint = ll.num_to_le_uint
 local num_to_be_uint = ll.num_to_be_uint
 
+local ffi = require "ffi"
+ffi.cdef[[
+    int gethostname(char *name, size_t len);
+]]
+
 local function _tostring(ob)
     local t = {}
     for i = 1 , 12 do
@@ -47,14 +52,18 @@ local object_id_mt = {
     __le = function ( a , b ) return a.id <= b.id end ;
 }
 
-local machineid
-if hasposix then
-    machineid = posix.uname("%n")
-else
-    machineid = assert(io.popen("uname -n")):read("*l")
+local function host()
+   local size = 256
+   local buf = ffi.new("unsigned char[?]", size)
+   local res = ffi.C.gethostname(buf, size)
+   if res == 0 then
+      return ffi.string(buf)
+   else
+      error("ffi.C.gethostname failed: " .. tostring(res))
+   end
 end
-machineid = ngx.md5_bin(machineid):sub(1, 3)
 
+local machineid = ngx.md5_bin(host()):sub(1, 3)
 local pid = num_to_le_uint(bit.band(ngx.worker.pid(), 0xFFFF), 2)
 
 local inc = 0
